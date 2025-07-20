@@ -42,7 +42,8 @@ defmodule LicensePlatePT.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.12", only: :test},
       {:sobelow, "~> 0.14", only: [:dev], runtime: false},
-      {:stream_data, "~> 1.0", only: :test}
+      {:stream_data, "~> 1.0", only: :test},
+      {:mix_audit, "~> 2.0", only: [:dev, :test], runtime: false}
     ]
   end
 end
