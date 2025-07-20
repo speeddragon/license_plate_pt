@@ -1,0 +1,80 @@
+name: Tests and Dialyzer
+
+on: 
+  push:
+    branches: 
+      - '**'
+    tags-ignore: 
+      - 'v*.*.*'
+env:
+  OTP_VERSION: 27
+  ELIXIR_VERSION: 1.18
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache deps and _build folders
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-env_test-otp-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-env_test-otp-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION}}-mix-
+            ${{ runner.os }}-env_test-otp-${{ env.OTP_VERSION }}-elixir-
+            ${{ runner.os }}-env_test-otp-
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{ env.OTP_VERSION }}
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+
+      - run: mix deps.get
+      - run: mix coveralls
+
+  dialyze:
+    name: Check typespecs
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        otp-version: ${{ env.OTP_VERSION }}
+        elixir-version: ${{ env.ELIXIR_VERSION }}
+    
+    - name: Restore dependencies cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          deps
+          _build
+        key: ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION}}-mix-
+          ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-
+          ${{ runner.os }}-env_dev-otp-
+    
+    - name: Restore PLT_CACHE
+      uses: actions/cache@v4
+      with:
+        path: |
+          _build/dev/*.plt
+          _build/dev/*.plt.hash
+        key: ${{ runner.os }}-env_dev-plt-otp-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: | 
+          ${{ runner.os }}-env_dev-plt-otp-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-mix-
+          ${{ runner.os }}-env_dev-plt-otp-${{ env.OTP_VERSION }}-elixir-
+          ${{ runner.os }}-env_dev-plt-otp-
+
+    - name: Install dependencies
+      run: mix do deps.get, deps.compile
+    
+    - name: Run Dialyzer
+      run: mix dialyzer

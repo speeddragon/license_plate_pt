@@ -1,0 +1,155 @@
+name: Lints
+
+on: 
+  push:
+    branches: 
+      - '**'
+    tags-ignore: 
+      - 'v*.*.*'
+
+env:
+  OTP_VERSION: 27
+  ELIXIR_VERSION: 1.18
+
+jobs:
+  dependencies:
+    name: Check dependencies status
+    runs-on: ubuntu-latest
+    steps: 
+    - uses: actions/checkout@v2
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        otp-version: ${{ env.OTP_VERSION }}
+        elixir-version: ${{ env.ELIXIR_VERSION }}
+
+    - name: Restore dependencies cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          deps
+        key: ${{ runner.os }}-deps-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-deps-mix-${{ hashFiles('**/mix.lock') }}
+          ${{ runner.os }}-deps-mix-
+
+    - name: Fetch dependencies
+      run: mix deps.get
+
+    - run: mix hex.outdated
+
+  formatting:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        otp-version: ${{ env.OTP_VERSION }}
+        elixir-version: ${{ env.ELIXIR_VERSION }}
+
+    - name: Restore dependencies cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          deps
+          _build
+        key: ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-mix-
+          ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-
+          ${{ runner.os }}-env_dev-otp-
+
+    - name: Fetch dependencies
+      run: mix do deps.get, deps.compile
+
+    - name: Check formatting
+      run: mix format --check-formatted
+
+  credo:
+    name: Check our credo
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        otp-version: ${{ env.OTP_VERSION }}
+        elixir-version: ${{ env.ELIXIR_VERSION }}
+
+    - name: Restore dependencies cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          deps
+          _build
+        key: ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION}}-mix-
+          ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-
+          ${{ runner.os }}-env_dev-otp-
+    
+    - name: Install dependencies
+      run: mix do deps.get, deps.compile
+    
+    - name: Run Credo
+      run: mix credo --all
+
+  audit:
+    name: Check Audit
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        otp-version: ${{ env.OTP_VERSION }}
+        elixir-version: ${{ env.ELIXIR_VERSION }}
+
+    - name: Restore dependencies cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          deps
+          _build
+        key: ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION}}-mix-
+          ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-
+          ${{ runner.os }}-env_dev-otp-
+    
+    - name: Install dependencies
+      run: mix do deps.get, deps.compile
+    
+    - name: Run Audit
+      run: mix deps.audit
+
+  sobelow:
+    name: Check sobelow
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        otp-version: ${{ env.OTP_VERSION }}
+        elixir-version: ${{ env.ELIXIR_VERSION }}
+
+    - name: Restore dependencies cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          deps
+          _build
+        key: ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION}}-mix-
+          ${{ runner.os }}-env_dev-otp-${{ env.OTP_VERSION }}-elixir-
+          ${{ runner.os }}-env_dev-otp-
+    
+    - name: Install dependencies
+      run: mix do deps.get, deps.compile
+    
+    - name: Run Audit
+      run: mix sobelow --exit medium --compact --skip
