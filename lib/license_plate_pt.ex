@@ -79,6 +79,8 @@ defmodule LicensePlatePT do
       |> String.upcase()
       |> String.replace("-", "")
 
+    has_dashes = String.contains?(requested_license_plate, "-")
+
     case valid?(license_plate) do
       true ->
         {type, letters, numbers} =
@@ -107,7 +109,8 @@ defmodule LicensePlatePT do
          %LicensePlate{
            type: type,
            letters: letters,
-           numbers: numbers
+           numbers: numbers,
+           dashes: has_dashes
          }}
 
       false ->
