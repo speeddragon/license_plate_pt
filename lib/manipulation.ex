@@ -18,6 +18,8 @@ defmodule LicensePlatePT.Manipulation do
   @type123_max_number LicensePlatePT.get_type123_max_number()
   @type4_max_number LicensePlatePT.get_type4_max_number()
 
+  @type license_plate_triplet() :: {nil | 1..4, String.t(), 0..9999}
+
   @doc """
   Add dash to a license plate. If an invalid license plate is provided, `nil` is returned.
 
@@ -87,7 +89,7 @@ defmodule LicensePlatePT.Manipulation do
     end
   end
 
-  @spec safe_increase_numbers(LicensePlate.t()) :: {nil | 1..4, String.t(), 0..9999}
+  @spec safe_increase_numbers(LicensePlate.t()) :: license_plate_triplet()
   defp safe_increase_numbers(%LicensePlate{
          type: type,
          letters: letters,
@@ -134,38 +136,41 @@ defmodule LicensePlatePT.Manipulation do
 
   def previous(license_plate, 0), do: license_plate
 
-  # credo:disable-for-lines:28
   def previous(license_plate, iteration) do
-    case to_struct(license_plate) do
-      {:error, _} ->
+    license_plate
+    |> to_struct()
+    |> process_previous_license_plate()
+    |> previous(iteration - 1)
+  end
+
+  defp process_previous_license_plate({:error, _}), do: nil
+
+  defp process_previous_license_plate({:ok, %LicensePlate{} = license_plate}) do
+    license_plate
+    |> safe_decrease_numbers()
+    |> case do
+      {nil, _, _} ->
         nil
 
-      {:ok,
-       %LicensePlate{
-         type: type,
-         letters: letters,
-         numbers: numbers
-       }} ->
-        {new_type, new_letters, new_numbers} =
-          if lower_bound?(type, letters, numbers) do
-            handle_lower_bound(type, letters, numbers)
-          else
-            {type, letters, numbers - 1}
-          end
+      {new_type, new_letters, new_numbers} ->
+        dashes = String.contains?(to_string(license_plate), "-")
 
-        if is_nil(new_type) do
-          nil
-        else
-          new_license_plate =
-            to_string(%LicensePlate{type: new_type, letters: new_letters, numbers: new_numbers})
-
-          case String.contains?(license_plate, "-") do
-            true -> add_dash(new_license_plate)
-            false -> new_license_plate
-          end
-        end
+        to_string(%LicensePlate{
+          type: new_type,
+          letters: new_letters,
+          numbers: new_numbers,
+          dashes: dashes
+        })
     end
-    |> previous(iteration - 1)
+  end
+
+  @spec safe_decrease_numbers(LicensePlate.t()) :: license_plate_triplet()
+  defp safe_decrease_numbers(%LicensePlate{type: type, letters: letters, numbers: numbers}) do
+    if lower_bound?(type, letters, numbers) do
+      handle_lower_bound(type, letters, numbers)
+    else
+      {type, letters, numbers - 1}
+    end
   end
 
   defp lower_bound?(type, letters, numbers),
@@ -415,7 +420,6 @@ defmodule LicensePlatePT.Manipulation do
 
   defp fill_partial_inner(""), do: "__-__-__"
 
-  # credo:disable-for-next-line
   defp fill_partial_inner(<<partial_license_plate::bytes-size(1)>>),
     do: "#{partial_license_plate}_-__-__"
 
@@ -638,6 +642,14 @@ defmodule LicensePlatePT.Manipulation do
     end
   end
 
+  defguardp same_letters(l1, l2, l3, l4) when l1 == l2 and l2 == l3 and l3 == l4
+
+  @vowels ["A", "E", "I", "O", "U"]
+  defguardp contains_too_many_vowels(l1, l2, l3, l4)
+            when (l1 in @vowels and l2 in @vowels and l4 in @vowels) or
+                   (l2 in @vowels and l3 in @vowels and l4 in @vowels) or
+                   (l2 in @vowels and l4 in @vowels)
+
   @type1_invalid_letters [
     "AM",
     "AP",
@@ -747,10 +759,7 @@ defmodule LicensePlatePT.Manipulation do
 
   defp invalid_letters_jump(3, "AN", :prev), do: 2
 
-  @vowels ["A", "E", "I", "O", "U"]
-
-  # Cannot pattern match on defguard, so we cannot extract this.
-  # credo:disable-for-next-line
+  # Can not pattern match on defguard, so we cannot extract this.
   defp invalid_letters_jump(
          4,
          <<l1::bytes-size(1), l2::bytes-size(1), l3::bytes-size(1), l4::bytes-size(1)>> =
@@ -759,10 +768,8 @@ defmodule LicensePlatePT.Manipulation do
        )
        # I think this will also be banned, but need to wait to see.
        # (l1 in @vowels and l3 in @vowels) or
-       when ((l1 in @vowels and l2 in @vowels and l4 in @vowels) or
-               (l2 in @vowels and l3 in @vowels and l4 in @vowels) or
-               (l2 in @vowels and l4 in @vowels)) and
-              not (l1 == l2 and l2 == l3 and l3 == l4) and not (l1 == l2 and l3 == l4) do
+       when contains_too_many_vowels(l1, l2, l3, l4) and
+              not same_letters(l1, l2, l3, l4) and not (l1 == l2 and l3 == l4) do
     1
   end
 
