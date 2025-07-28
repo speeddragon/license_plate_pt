@@ -645,7 +645,7 @@ defmodule LicensePlatePT.Manipulation do
   defguardp same_letters(l1, l2, l3, l4) when l1 == l2 and l2 == l3 and l3 == l4
 
   @vowels ["A", "E", "I", "O", "U"]
-  defguardp contains_too_many_vowels(l1, l2, l3, l4)
+  defguardp contains_vowels_edge_cases(l1, l2, l3, l4)
             when (l1 in @vowels and l2 in @vowels and l4 in @vowels) or
                    (l2 in @vowels and l3 in @vowels and l4 in @vowels) or
                    (l2 in @vowels and l4 in @vowels)
@@ -768,7 +768,7 @@ defmodule LicensePlatePT.Manipulation do
        )
        # I think this will also be banned, but need to wait to see.
        # (l1 in @vowels and l3 in @vowels) or
-       when contains_too_many_vowels(l1, l2, l3, l4) and
+       when contains_vowels_edge_cases(l1, l2, l3, l4) and
               not same_letters(l1, l2, l3, l4) and not (l1 == l2 and l3 == l4) do
     1
   end
