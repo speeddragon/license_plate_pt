@@ -82,17 +82,8 @@ defmodule LicensePlatePT.Manipulation do
         nil
 
       {type, letters, numbers} ->
-
-        # TODO why this doesn't work
-        # dashes = String.contains?(to_string(license_plate), "-") 
-        # to_string(%LicensePlate{type: type, letters: letters, numbers: numbers, dashes: dashes})
-        new_license_plate =
-          to_string(%LicensePlate{type: type, letters: letters, numbers: numbers})
-
-        case String.contains?(to_string(license_plate), "-") do
-          true -> add_dash(new_license_plate)
-          false -> new_license_plate
-        end
+        dashes = String.contains?(to_string(license_plate), "-")
+        to_string(%LicensePlate{type: type, letters: letters, numbers: numbers, dashes: dashes})
     end
   end
 

@@ -20,34 +20,22 @@ defmodule LicensePlatePT.LicensePlate do
           dashes: dashes
         })
         when dashes in [nil, false] do
-      numbers_string =
-        numbers
-        |> Integer.to_string()
-        |> String.pad_leading(4, "0")
+      {numbers1, numbers2} = split_numbers(numbers)
 
       case type do
         1 ->
-          "#{letters}#{numbers_string}"
+          "#{letters}#{numbers1}#{numbers2}"
 
         2 ->
-          "#{numbers_string}#{letters}"
+          "#{numbers1}#{numbers2}#{letters}"
 
         3 ->
-          # Split numbers
-          <<numbers1::binary-size(2), numbers2::binary-size(2)>> = numbers_string
-
           "#{numbers1}#{letters}#{numbers2}"
 
         4 ->
           # Split letters
           <<letters1::binary-size(2), letters2::binary-size(2)>> = letters
-
-          numbers_string =
-            numbers
-            |> Integer.to_string()
-            |> String.pad_leading(2, "0")
-
-          "#{letters1}#{numbers_string}#{letters2}"
+          "#{letters1}#{numbers2}#{letters2}"
       end
     end
 
@@ -57,35 +45,35 @@ defmodule LicensePlatePT.LicensePlate do
           numbers: numbers,
           dashes: true
         }) do
-      numbers_string =
-        numbers
-        |> Integer.to_string()
-        |> String.pad_leading(4, "0")
+      {numbers1, numbers2} = split_numbers(numbers)
 
       case type do
         1 ->
-          "#{letters}-#{numbers_string}"
+          "#{letters}-#{numbers1}-#{numbers2}"
 
         2 ->
-          "#{numbers_string}-#{letters}"
+          "#{numbers1}-#{numbers2}-#{letters}"
 
         3 ->
-          # Split numbers
-          <<numbers1::binary-size(2), numbers2::binary-size(2)>> = numbers_string
-
           "#{numbers1}-#{letters}-#{numbers2}"
 
         4 ->
           # Split letters
           <<letters1::binary-size(2), letters2::binary-size(2)>> = letters
-
-          numbers_string =
-            numbers
-            |> Integer.to_string()
-            |> String.pad_leading(2, "0")
-
-          "#{letters1}-#{numbers_string}-#{letters2}"
+          "#{letters1}-#{numbers2}-#{letters2}"
       end
+    end
+
+    @spec split_numbers(integer()) :: {<<_::_*16>>, <<_::_*16>>}
+    defp split_numbers(numbers) when is_integer(numbers) do
+      numbers_string =
+        numbers
+        |> Integer.to_string()
+        |> String.pad_leading(4, "0")
+
+      <<numbers1::binary-size(2), numbers2::binary-size(2)>> = numbers_string
+
+      {numbers1, numbers2}
     end
   end
 end
