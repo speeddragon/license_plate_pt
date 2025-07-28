@@ -969,7 +969,6 @@ defmodule LicensePlatePT.Manipulation do
   end
 
   def to_partial(_, position) when position in [1, 2, 4, 5] do
-    # TODO: To be implemented
     nil
   end
 
