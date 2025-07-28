@@ -7,7 +7,7 @@ defmodule LicensePlatePT.LicensePlate do
           type: integer(),
           letters: binary(),
           numbers: integer(),
-          dashes: boolean()
+          dashes: boolean() | nil
         }
 
   defstruct [:type, :letters, :numbers, :dashes]
