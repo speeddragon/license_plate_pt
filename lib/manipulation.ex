@@ -82,6 +82,10 @@ defmodule LicensePlatePT.Manipulation do
         nil
 
       {type, letters, numbers} ->
+
+        # TODO why this doesn't work
+        # dashes = String.contains?(to_string(license_plate), "-") 
+        # to_string(%LicensePlate{type: type, letters: letters, numbers: numbers, dashes: dashes})
         new_license_plate =
           to_string(%LicensePlate{type: type, letters: letters, numbers: numbers})
 
@@ -92,7 +96,7 @@ defmodule LicensePlatePT.Manipulation do
     end
   end
 
-  @spec safe_increase_numbers(LicensePlate.t()) :: {any(), any(), any()}
+  @spec safe_increase_numbers(LicensePlate.t()) :: {nil | 1..4, String.t(), 0..9999}
   defp safe_increase_numbers(%LicensePlate{
          type: type,
          letters: letters,
