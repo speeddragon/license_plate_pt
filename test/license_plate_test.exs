@@ -97,9 +97,34 @@ defmodule LicensePlatePTTest do
   describe "to_string" do
     test "Type 1" do
       assert "AA0011" == to_string(%LicensePlate{type: 1, letters: "AA", numbers: 11})
+    end
+
+    test "Type 2" do
+      assert "0001AA" == to_string(%LicensePlate{type: 2, letters: "AA", numbers: 1})
       assert "0011AA" == to_string(%LicensePlate{type: 2, letters: "AA", numbers: 11})
+      assert "0111AA" == to_string(%LicensePlate{type: 2, letters: "AA", numbers: 111})
+      assert "1111AA" == to_string(%LicensePlate{type: 2, letters: "AA", numbers: 1111})
+    end
+
+    test "Type 3" do
+      assert "00AA01" == to_string(%LicensePlate{type: 3, letters: "AA", numbers: 1})
       assert "00AA11" == to_string(%LicensePlate{type: 3, letters: "AA", numbers: 11})
+      assert "01AA11" == to_string(%LicensePlate{type: 3, letters: "AA", numbers: 111})
+      assert "11AA11" == to_string(%LicensePlate{type: 3, letters: "AA", numbers: 1111})
+    end
+
+    test "Type 4" do
       assert "AA01AA" == to_string(%LicensePlate{type: 4, letters: "AAAA", numbers: 1})
+      assert "AA11AA" == to_string(%LicensePlate{type: 4, letters: "AAAA", numbers: 11})
+      assert "AB00AA" == to_string(%LicensePlate{type: 4, letters: "ABAA", numbers: 0})
+    end
+
+    test "Type 2 - Dashed" do
+      assert "00-01-AA" ==
+               to_string(%LicensePlate{type: 2, letters: "AA", numbers: 1, dashes: true})
+
+      assert "00-11-AA" ==
+               to_string(%LicensePlate{type: 2, letters: "AA", numbers: 11, dashes: true})
     end
   end
 
