@@ -49,7 +49,7 @@ defmodule LicensePlatePT.Manipulation do
 
   It supports both shorter (without dash, ex: 0054AA) or longer (width dash, ex: 00-54-AA) license plate patterns.
   """
-  @spec next(binary(), integer()) :: binary() | nil
+  @spec next(nil | binary(), integer()) :: binary() | nil
   def next(license_plate, iterations \\ 1)
 
   def next(nil, _), do: nil
@@ -63,39 +63,46 @@ defmodule LicensePlatePT.Manipulation do
 
   def next(license_plate, 0), do: license_plate
 
-  # credo:disable-for-lines:28
   def next(license_plate, iterations) do
-    case to_struct(license_plate) do
-      {:error, _} ->
+    license_plate
+    |> to_struct()
+    |> process_next_license_plate()
+    |> next(iterations - 1)
+  end
+
+  defp process_next_license_plate({:error, _}) do
+    nil
+  end
+
+  defp process_next_license_plate({:ok, %LicensePlate{} = license_plate}) do
+    license_plate
+    |> safe_increase_numbers()
+    |> case do
+      {nil, _, _} ->
         nil
 
-      {:ok,
-       %LicensePlate{
+      {type, letters, numbers} ->
+        new_license_plate = %LicensePlate{type: type, letters: letters, numbers: numbers}
+
+        case String.contains?(to_string(license_plate), "-") do
+          true -> add_dash(to_string(new_license_plate))
+          false -> new_license_plate
+        end
+    end
+  end
+
+  @spec safe_increase_numbers(LicensePlate.t()) :: {any(), any(), any()}
+  defp safe_increase_numbers(%LicensePlate{
          type: type,
          letters: letters,
          numbers: numbers
-       }} ->
-        {new_type, new_letters, new_numbers} =
-          if numbers + 1 > max_numbers(type) do
-            # Avoid 00-00
-            handle_upper_bound(type, letters, numbers)
-          else
-            {type, letters, numbers + 1}
-          end
-
-        if is_nil(new_type) do
-          nil
-        else
-          new_license_plate =
-            to_string(%LicensePlate{type: new_type, letters: new_letters, numbers: new_numbers})
-
-          case String.contains?(license_plate, "-") do
-            true -> add_dash(new_license_plate)
-            false -> new_license_plate
-          end
-        end
+       }) do
+    if numbers + 1 > max_numbers(type) do
+      # Avoid 00-00
+      handle_upper_bound(type, letters, numbers)
+    else
+      {type, letters, numbers + 1}
     end
-    |> next(iterations - 1)
   end
 
   defp max_numbers(4), do: @type4_max_number
