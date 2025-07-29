@@ -724,7 +724,6 @@ defmodule LicensePlatePT.Manipulation do
     "ZJ",
     "ZL",
     "ZM",
-    "ZM",
     "ZQ",
     "ZT",
     "ZU",
