@@ -650,97 +650,42 @@ defmodule LicensePlatePT.Manipulation do
                    (l2 in @vowels and l3 in @vowels and l4 in @vowels) or
                    (l2 in @vowels and l4 in @vowels)
 
-  @type1_invalid_letters [
-    "AM",
-    "AP",
-    "CC",
-    "EM",
-    "MB",
-    "MC",
-    "ME",
-    "MF",
-    "MG",
-    "MH",
-    "MI",
-    "MJ",
-    "ML",
-    "MU",
-    "MV",
-    "MX",
-    "MZ",
-    "NU",
-    "NV",
-    "NZ",
-    "OU",
-    "OV",
-    "OZ",
-    "PR",
-    "PU",
-    "PV",
-    "PZ",
-    "QU",
-    "QV",
-    "QZ",
-    "RU",
-    "RV",
-    "RZ",
-    "SU",
-    "SV",
-    "SZ",
-    "TB",
-    "TC",
-    "TD",
-    "TE",
-    "TF",
-    "TG",
-    "TH",
-    "TJ",
-    "TL",
-    "TQ",
-    "TZ",
-    "UM",
-    "UN",
-    "UO",
-    "UP",
-    "UQ",
-    "UR",
-    "US",
-    "UT",
-    "UV",
-    "VM",
-    "VN",
-    "VO",
-    "VP",
-    "VQ",
-    "VR",
-    "VS",
-    "VT",
-    "ZA",
-    "ZC",
-    "ZD",
-    "ZG",
-    "ZH",
-    "ZI",
-    "ZJ",
-    "ZL",
-    "ZM",
-    "ZQ",
-    "ZT",
-    "ZU",
-    "ZV"
-  ]
+  @invalid_letters_group %{
+    "A" => ~w(M P),
+    "C" => ~w(C),
+    "E" => ~w(M),
+    "K" => Enum.map(?A..?Z, &<<&1>>),
+    "M" => ~w(B C E F G H I J L U V X Z),
+    "N" => ~w(U V Z),
+    "O" => ~w(U V Z),
+    "P" => ~w(R U V Z),
+    "Q" => ~w(U V Z),
+    "R" => ~w(U V Z),
+    "S" => ~w(U V Z),
+    "T" => ~w(B C D E F G H J L Q Z),
+    "U" => ~w(M N O P Q R S T V),
+    "V" => ~w(M N O P Q R S T),
+    "Z" => ~w(A C D G H I J L M Q T U V)
+  }
+
+  defp invalid_type1?(<<p::binary-size(1), s::binary-size(1)>>) do
+    Map.get(@invalid_letters_group, p, []) |> Enum.member?(s)
+  end
 
   @spec invalid_letters_jump(integer(), String.t(), :next | :prev) :: integer()
-  defp invalid_letters_jump(1, letters, direction)
-       when letters in @type1_invalid_letters or (letters >= "KA" and letters <= "KZ") do
-    follow_letters =
-      if direction == :next do
-        next_letters(letters)
-      else
-        previous_letters(letters)
-      end
+  defp invalid_letters_jump(1, letters, direction) do
+    if invalid_type1?(letters) do
+      follow_letters =
+        if direction == :next do
+          next_letters(letters)
+        else
+          previous_letters(letters)
+        end
 
-    1 + invalid_letters_jump(1, follow_letters, direction)
+      1 + invalid_letters_jump(1, follow_letters, direction)
+    else
+      0
+    end
   end
 
   defp invalid_letters_jump(2, letters, _) when letters in ["AS", "CU", "OO"], do: 1
