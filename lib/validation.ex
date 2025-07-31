@@ -135,22 +135,15 @@ defmodule LicensePlatePT.Validation do
     end
   end
 
-  defp check_license_plate_dashed(true, license_plate), do: valid_dash_structure?(license_plate)
-  defp check_license_plate_dashed(false, _), do: false
-  defp check_license_plate_stripped(true, license_plate), do: String.length(license_plate) == 6
-  defp check_license_plate_stripped(false, _), do: false
+  defp check_license_plate_dashed(
+         true,
+         <<_::bytes-size(2)>> <> "-" <> <<_::bytes-size(2)>> <> "-" <> <<_::bytes-size(2)>>
+       ),
+       do: true
 
-  @spec valid_dash_structure?(binary()) :: boolean()
-  defp valid_dash_structure?(license_plate) do
-    parts = String.split(license_plate, "-")
-
-    if length(parts) == 3 do
-      String.length(Enum.at(parts, 0)) == 2 && String.length(Enum.at(parts, 1)) == 2 &&
-        String.length(Enum.at(parts, 2)) == 2
-    else
-      false
-    end
-  end
+  defp check_license_plate_dashed(_, _), do: false
+  defp check_license_plate_stripped(true, <<_::bytes-size(6)>>), do: true
+  defp check_license_plate_stripped(_, _), do: false
 
   @doc """
   Check if a license plate is ordered before than another license plate.

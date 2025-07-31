@@ -645,12 +645,20 @@ defmodule LicensePlatePT.Manipulation do
   defguardp same_letters(l1, l2, l3, l4) when l1 == l2 and l2 == l3 and l3 == l4
 
   @vowels ["A", "E", "I", "O", "U"]
-  defguardp contains_vowels_edge_cases(l1, l2, l3, l4)
-            when (l1 in @vowels and l2 in @vowels and l4 in @vowels) or
-                   (l2 in @vowels and l3 in @vowels and l4 in @vowels) or
-                   (l2 in @vowels and l4 in @vowels)
+  defguardp vowels_in_1_2_4_position(l1, l2, l4)
+            when l1 in @vowels and l2 in @vowels and l4 in @vowels
 
-  @invalid_letters_group %{
+  defguardp vowels_in_2_3_4_position(l2, l3, l4)
+            when l2 in @vowels and l3 in @vowels and l4 in @vowels
+
+  defguardp vowels_in_2_4_position(l2, l4) when l2 in @vowels and l4 in @vowels
+
+  defguardp contains_vowels_edge_cases(l1, l2, l3, l4)
+            when vowels_in_1_2_4_position(l1, l2, l4) or
+                   vowels_in_2_3_4_position(l2, l3, l4) or
+                   vowels_in_2_4_position(l2, l4)
+
+  @type1_invalid_letters_group %{
     "A" => ~w(M P),
     "C" => ~w(C),
     "E" => ~w(M),
@@ -669,7 +677,7 @@ defmodule LicensePlatePT.Manipulation do
   }
 
   defp invalid_type1?(<<p::binary-size(1), s::binary-size(1)>>) do
-    Map.get(@invalid_letters_group, p, []) |> Enum.member?(s)
+    Map.get(@type1_invalid_letters_group, p, []) |> Enum.member?(s)
   end
 
   @spec invalid_letters_jump(integer(), String.t(), :next | :prev) :: integer()
@@ -710,10 +718,9 @@ defmodule LicensePlatePT.Manipulation do
            _letters,
          _
        )
-       # I think this will also be banned, but need to wait to see.
-       # (l1 in @vowels and l3 in @vowels) or
        when contains_vowels_edge_cases(l1, l2, l3, l4) and
-              not same_letters(l1, l2, l3, l4) and not (l1 == l2 and l3 == l4) do
+              not same_letters(l1, l2, l3, l4) and
+              not (l1 == l2 and l3 == l4) do
     1
   end
 
