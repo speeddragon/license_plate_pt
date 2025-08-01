@@ -18,6 +18,8 @@ defmodule LicensePlatePT.Manipulation do
   @type123_max_number LicensePlatePT.get_type123_max_number()
   @type4_max_number LicensePlatePT.get_type4_max_number()
 
+  @type license_plate_triplet() :: {nil | 1..4, String.t(), 0..9999}
+
   @doc """
   Add dash to a license plate. If an invalid license plate is provided, `nil` is returned.
 
@@ -87,7 +89,7 @@ defmodule LicensePlatePT.Manipulation do
     end
   end
 
-  @spec safe_increase_numbers(LicensePlate.t()) :: {nil | 1..4, String.t(), 0..9999}
+  @spec safe_increase_numbers(LicensePlate.t()) :: license_plate_triplet()
   defp safe_increase_numbers(%LicensePlate{
          type: type,
          letters: letters,
@@ -134,38 +136,41 @@ defmodule LicensePlatePT.Manipulation do
 
   def previous(license_plate, 0), do: license_plate
 
-  # credo:disable-for-lines:28
   def previous(license_plate, iteration) do
-    case to_struct(license_plate) do
-      {:error, _} ->
+    license_plate
+    |> to_struct()
+    |> process_previous_license_plate()
+    |> previous(iteration - 1)
+  end
+
+  defp process_previous_license_plate({:error, _}), do: nil
+
+  defp process_previous_license_plate({:ok, %LicensePlate{} = license_plate}) do
+    license_plate
+    |> safe_decrease_numbers()
+    |> case do
+      {nil, _, _} ->
         nil
 
-      {:ok,
-       %LicensePlate{
-         type: type,
-         letters: letters,
-         numbers: numbers
-       }} ->
-        {new_type, new_letters, new_numbers} =
-          if lower_bound?(type, letters, numbers) do
-            handle_lower_bound(type, letters, numbers)
-          else
-            {type, letters, numbers - 1}
-          end
+      {new_type, new_letters, new_numbers} ->
+        dashes = String.contains?(to_string(license_plate), "-")
 
-        if is_nil(new_type) do
-          nil
-        else
-          new_license_plate =
-            to_string(%LicensePlate{type: new_type, letters: new_letters, numbers: new_numbers})
-
-          case String.contains?(license_plate, "-") do
-            true -> add_dash(new_license_plate)
-            false -> new_license_plate
-          end
-        end
+        to_string(%LicensePlate{
+          type: new_type,
+          letters: new_letters,
+          numbers: new_numbers,
+          dashes: dashes
+        })
     end
-    |> previous(iteration - 1)
+  end
+
+  @spec safe_decrease_numbers(LicensePlate.t()) :: license_plate_triplet()
+  defp safe_decrease_numbers(%LicensePlate{type: type, letters: letters, numbers: numbers}) do
+    if lower_bound?(type, letters, numbers) do
+      handle_lower_bound(type, letters, numbers)
+    else
+      {type, letters, numbers - 1}
+    end
   end
 
   defp lower_bound?(type, letters, numbers),
@@ -415,7 +420,6 @@ defmodule LicensePlatePT.Manipulation do
 
   defp fill_partial_inner(""), do: "__-__-__"
 
-  # credo:disable-for-next-line
   defp fill_partial_inner(<<partial_license_plate::bytes-size(1)>>),
     do: "#{partial_license_plate}_-__-__"
 
@@ -638,98 +642,58 @@ defmodule LicensePlatePT.Manipulation do
     end
   end
 
-  @type1_invalid_letters [
-    "AM",
-    "AP",
-    "CC",
-    "EM",
-    "MB",
-    "MC",
-    "ME",
-    "MF",
-    "MG",
-    "MH",
-    "MI",
-    "MJ",
-    "ML",
-    "MU",
-    "MV",
-    "MX",
-    "MZ",
-    "NU",
-    "NV",
-    "NZ",
-    "OU",
-    "OV",
-    "OZ",
-    "PR",
-    "PU",
-    "PV",
-    "PZ",
-    "QU",
-    "QV",
-    "QZ",
-    "RU",
-    "RV",
-    "RZ",
-    "SU",
-    "SV",
-    "SZ",
-    "TB",
-    "TC",
-    "TD",
-    "TE",
-    "TF",
-    "TG",
-    "TH",
-    "TJ",
-    "TL",
-    "TQ",
-    "TZ",
-    "UM",
-    "UN",
-    "UO",
-    "UP",
-    "UQ",
-    "UR",
-    "US",
-    "UT",
-    "UV",
-    "VM",
-    "VN",
-    "VO",
-    "VP",
-    "VQ",
-    "VR",
-    "VS",
-    "VT",
-    "ZA",
-    "ZC",
-    "ZD",
-    "ZG",
-    "ZH",
-    "ZI",
-    "ZJ",
-    "ZL",
-    "ZM",
-    "ZM",
-    "ZQ",
-    "ZT",
-    "ZU",
-    "ZV"
-  ]
+  defguardp same_letters(l1, l2, l3, l4) when l1 == l2 and l2 == l3 and l3 == l4
+
+  @vowels ["A", "E", "I", "O", "U"]
+  defguardp vowels_in_1_2_4_position(l1, l2, l4)
+            when l1 in @vowels and l2 in @vowels and l4 in @vowels
+
+  defguardp vowels_in_2_3_4_position(l2, l3, l4)
+            when l2 in @vowels and l3 in @vowels and l4 in @vowels
+
+  defguardp vowels_in_2_4_position(l2, l4) when l2 in @vowels and l4 in @vowels
+
+  defguardp contains_vowels_edge_cases(l1, l2, l3, l4)
+            when vowels_in_1_2_4_position(l1, l2, l4) or
+                   vowels_in_2_3_4_position(l2, l3, l4) or
+                   vowels_in_2_4_position(l2, l4)
+
+  @type1_invalid_letters_group %{
+    "A" => ~w(M P),
+    "C" => ~w(C),
+    "E" => ~w(M),
+    "K" => Enum.map(?A..?Z, &<<&1>>),
+    "M" => ~w(B C E F G H I J L U V X Z),
+    "N" => ~w(U V Z),
+    "O" => ~w(U V Z),
+    "P" => ~w(R U V Z),
+    "Q" => ~w(U V Z),
+    "R" => ~w(U V Z),
+    "S" => ~w(U V Z),
+    "T" => ~w(B C D E F G H J L Q Z),
+    "U" => ~w(M N O P Q R S T V),
+    "V" => ~w(M N O P Q R S T),
+    "Z" => ~w(A C D G H I J L M Q T U V)
+  }
+
+  defp invalid_type1?(<<p::binary-size(1), s::binary-size(1)>>) do
+    Map.get(@type1_invalid_letters_group, p, []) |> Enum.member?(s)
+  end
 
   @spec invalid_letters_jump(integer(), String.t(), :next | :prev) :: integer()
-  defp invalid_letters_jump(1, letters, direction)
-       when letters in @type1_invalid_letters or (letters >= "KA" and letters <= "KZ") do
-    follow_letters =
-      if direction == :next do
-        next_letters(letters)
-      else
-        previous_letters(letters)
-      end
+  defp invalid_letters_jump(1, letters, direction) do
+    if invalid_type1?(letters) do
+      follow_letters =
+        if direction == :next do
+          next_letters(letters)
+        else
+          previous_letters(letters)
+        end
 
-    1 + invalid_letters_jump(1, follow_letters, direction)
+      1 + invalid_letters_jump(1, follow_letters, direction)
+    else
+      0
+    end
   end
 
   defp invalid_letters_jump(2, letters, _) when letters in ["AS", "CU", "OO"], do: 1
@@ -747,22 +711,16 @@ defmodule LicensePlatePT.Manipulation do
 
   defp invalid_letters_jump(3, "AN", :prev), do: 2
 
-  @vowels ["A", "E", "I", "O", "U"]
-
-  # Cannot pattern match on defguard, so we cannot extract this.
-  # credo:disable-for-next-line
+  # Can not pattern match on defguard, so we cannot extract this.
   defp invalid_letters_jump(
          4,
          <<l1::bytes-size(1), l2::bytes-size(1), l3::bytes-size(1), l4::bytes-size(1)>> =
            _letters,
          _
        )
-       # I think this will also be banned, but need to wait to see.
-       # (l1 in @vowels and l3 in @vowels) or
-       when ((l1 in @vowels and l2 in @vowels and l4 in @vowels) or
-               (l2 in @vowels and l3 in @vowels and l4 in @vowels) or
-               (l2 in @vowels and l4 in @vowels)) and
-              not (l1 == l2 and l2 == l3 and l3 == l4) and not (l1 == l2 and l3 == l4) do
+       when contains_vowels_edge_cases(l1, l2, l3, l4) and
+              not same_letters(l1, l2, l3, l4) and
+              not (l1 == l2 and l3 == l4) do
     1
   end
 

@@ -106,22 +106,25 @@ defmodule LicensePlatePT.Validation do
     end
   end
 
+  @type option() :: {:dashed, boolean()} | {:stripped, boolean()}
+
+  @spec check_license_plate_dashed_or_stripped(String.t() | :error, [option]) ::
+          String.t() | :error
   defp check_license_plate_dashed_or_stripped(:error, _), do: :error
 
-  # credo:disable-for-next-line
   defp check_license_plate_dashed_or_stripped(license_plate, opts)
        when is_binary(license_plate) do
     dashed = Keyword.get(opts, :dashed, false)
     stripped = Keyword.get(opts, :stripped, false)
 
     cond do
-      dashed == true and stripped == true ->
+      dashed and stripped ->
         raise ArgumentError, message: "Only `:dashed` or `:stripped` can be enable at one time."
 
-      dashed == true and valid_dash_structure?(license_plate) ->
+      check_license_plate_dashed(dashed, license_plate) ->
         license_plate
 
-      stripped == true and String.length(license_plate) == 6 ->
+      check_license_plate_stripped(stripped, license_plate) ->
         license_plate
 
       dashed == false and stripped == false ->
@@ -132,17 +135,15 @@ defmodule LicensePlatePT.Validation do
     end
   end
 
-  @spec valid_dash_structure?(binary()) :: boolean()
-  defp valid_dash_structure?(license_plate) do
-    parts = String.split(license_plate, "-")
+  defp check_license_plate_dashed(
+         true,
+         <<_::bytes-size(2)>> <> "-" <> <<_::bytes-size(2)>> <> "-" <> <<_::bytes-size(2)>>
+       ),
+       do: true
 
-    if length(parts) == 3 do
-      String.length(Enum.at(parts, 0)) == 2 && String.length(Enum.at(parts, 1)) == 2 &&
-        String.length(Enum.at(parts, 2)) == 2
-    else
-      false
-    end
-  end
+  defp check_license_plate_dashed(_, _), do: false
+  defp check_license_plate_stripped(true, <<_::bytes-size(6)>>), do: true
+  defp check_license_plate_stripped(_, _), do: false
 
   @doc """
   Check if a license plate is ordered before than another license plate.
