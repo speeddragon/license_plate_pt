@@ -57,6 +57,7 @@ defmodule LicensePlatePT do
   defdelegate fill_partial(partial_license_plate), to: LicensePlatePT.Manipulation
 
   defdelegate add_dash(license_plate), to: LicensePlatePT.Manipulation
+  defdelegate remove_dash(license_plate), to: LicensePlatePT.Manipulation
 
   defdelegate get_middle_between(license_plate1, license_plate2),
     to: LicensePlatePT.Manipulation

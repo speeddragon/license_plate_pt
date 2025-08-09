@@ -2,7 +2,7 @@ defmodule LicensePlatePT.ManipulationTest do
   @moduledoc false
 
   @subject LicensePlatePT.Manipulation
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest @subject
 
   describe "add_dash" do
@@ -20,6 +20,24 @@ defmodule LicensePlatePT.ManipulationTest do
 
     test "nil" do
       assert is_nil(@subject.add_dash(nil))
+    end
+  end
+
+  describe "remove_dash" do
+    test "undashed license plate" do
+      assert "AD5433" == @subject.remove_dash("AD5433")
+    end
+
+    test "undashed lower case license plate" do
+      assert "AD5433" == @subject.remove_dash("ad-54-33")
+    end
+
+    test "dashed license plate" do
+      assert "AD5433" == @subject.remove_dash("AD-54-33")
+    end
+
+    test "nil" do
+      assert is_nil(@subject.remove_dash(nil))
     end
   end
 
