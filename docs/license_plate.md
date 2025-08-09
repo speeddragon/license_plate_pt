@@ -75,7 +75,7 @@ Example: `AA-01-AA`, `BC-98-ZZ`
 Because some combination might produce bad words, there are some rules on which
 a license plate could be invalid.
 
-* 1st 2nd 3rd position of the letters can't be vowels. 
+* 1st, 2nd and 3rd position of the letters can't be vowels. 
 * 2nd, 3rd and 4th position of the letters can't be vowels. 
 * 2nd and 4th position of the letters can't be vowels.
 * `AA-00-AA` isn't a valid license plate, but every other starting in 00 is valid.
