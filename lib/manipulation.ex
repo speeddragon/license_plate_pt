@@ -25,22 +25,47 @@ defmodule LicensePlatePT.Manipulation do
 
   ## Examples
 
-    iex> LicensePlatePT.add_dash("AB01DF")
+    iex> LicensePlatePT.Manipulation.add_dash("AB01DF")
     "AB-01-DF"
 
-    iex> LicensePlatePT.add_dash("AB-01-DF")
+    iex> LicensePlatePT.Manipulation.add_dash("AB-01-DF")
     "AB-01-DF"
 
-    iex> LicensePlatePT.add_dash("dsds")
+    iex> LicensePlatePT.Manipulation.add_dash("dsds")
     nil
   """
   def add_dash(license_plate) do
-    if valid?(license_plate) || valid_partial?(license_plate) do
+    if valid?(license_plate) or valid_partial?(license_plate) do
       case String.split(license_plate, "", trim: true) do
         [a, b, c, d, e, f] -> String.upcase("#{a}#{b}-#{c}#{d}-#{e}#{f}")
         [_, _, "-", _, _, "-", _, _] -> String.upcase(license_plate)
         _ -> nil
       end
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Remove dash from a license plate. If an invalid license plate is provided, `nil` is returned.
+
+  ## Examples 
+
+    iex > LicensePlatePT.Manipulation.remove_dash("AB01DF")
+    "AB01DF"
+
+    iex > LicensePlatePT.Manipulation.remove_dash("AB-01-DF")
+    "AB01DF"
+
+    iex > LicensePlatePT.Manipulation.remove_dash("ds")
+    nil 
+  """
+  def remove_dash(license_plate) do
+    if valid?(license_plate) or valid_partial?(license_plate) do
+      license_plate
+      |> String.trim()
+      |> String.upcase()
+      |> String.replace("-", "")
     else
       nil
     end
