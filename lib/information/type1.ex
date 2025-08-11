@@ -433,32 +433,37 @@ defmodule LicensePlatePT.Information.Type1 do
             year
 
           years ->
-            if all_sequential?(years) do
-              years_length = length(years)
-              pinpoint = floor(numbers / LicensePlatePT.get_type123_max_number() * years_length)
-              Enum.at(years, pinpoint)
-            else
-              if numbers < @special_number_section do
-                List.last(years)
-              else
-                sequential_years = get_only_sequencial_numbers(years)
-
-                years_length = length(sequential_years)
-
-                pinpoint =
-                  floor(
-                    (numbers - @special_number_section) /
-                      (LicensePlatePT.get_type123_max_number() - @special_number_section) *
-                      years_length
-                  )
-
-                Enum.at(sequential_years, pinpoint)
-              end
-            end
+            handle_multiple_years(years, numbers)
         end
 
       _ ->
         nil
+    end
+  end
+
+  @spec handle_multiple_years(list(non_neg_integer()), non_neg_integer()) :: non_neg_integer()
+  defp handle_multiple_years(years, numbers) when is_list(years) and is_integer(numbers) do
+    if all_sequential?(years) do
+      years_length = length(years)
+      pinpoint = floor(numbers / LicensePlatePT.get_type123_max_number() * years_length)
+      Enum.at(years, pinpoint)
+    else
+      if numbers < @special_number_section do
+        List.last(years)
+      else
+        sequential_years = get_only_sequencial_numbers(years)
+
+        years_length = length(sequential_years)
+
+        pinpoint =
+          floor(
+            (numbers - @special_number_section) /
+              (LicensePlatePT.get_type123_max_number() - @special_number_section) *
+              years_length
+          )
+
+        Enum.at(sequential_years, pinpoint)
+      end
     end
   end
 
