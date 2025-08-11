@@ -421,9 +421,51 @@ defmodule LicensePlatePT.Information.Type1 do
     "ZZ" => ~w(74)
   }
 
+  # In some cases, the first 1000 weren't used, only later started 
+  # to be used, so assigned to later years.
+  @special_number_section 1000
+  @spec get_year(String.t()) :: 1900..1992 | nil
+  def get_year(license_plate) when is_binary(license_plate) do
+    case LicensePlatePT.to_struct(license_plate) do
+      {:ok, %LicensePlatePT.LicensePlate{type: 1, letters: letters, numbers: numbers}} ->
+        case get_years_by_letters(letters) do
+          [year] ->
+            year
+
+          years ->
+            if all_sequential?(years) do
+              years_length = length(years)
+              pinpoint = floor(numbers / LicensePlatePT.get_type123_max_number() * years_length)
+              Enum.at(years, pinpoint)
+            else
+              if numbers < @special_number_section do
+                List.last(years)
+              else
+                sequential_years = get_only_sequencial_numbers(years)
+
+                years_length = length(sequential_years)
+
+                pinpoint =
+                  floor(
+                    (numbers - @special_number_section) /
+                      (LicensePlatePT.get_type123_max_number() - @special_number_section) *
+                      years_length
+                  )
+
+                Enum.at(sequential_years, pinpoint)
+              end
+            end
+        end
+
+      _ ->
+        nil
+    end
+  end
+
   @spec get_years_by_letters(<<_::16, _::_*8>>) :: list(integer()) | nil
   def get_years_by_letters(<<_::binary-size(2)>> = letters) do
     Map.get(@years, letters)
+    |> Enum.map(fn year -> String.to_integer(year) end)
   end
 
   def get_region_by_letters(letters) when letters in ["AA", "AB", "AC", "AD", "EM", "EV"] do
@@ -444,5 +486,34 @@ defmodule LicensePlatePT.Information.Type1 do
   }
   def motorcycle?(<<p::binary-size(1), s::binary-size(1)>>) do
     Map.get(@motorcycle, p, []) |> Enum.member?(s)
+  end
+
+  @spec all_sequential?(list(integer())) :: boolean()
+  defp all_sequential?([start_number | rem]) do
+    Enum.reduce_while(rem, start_number, fn value, previous_number ->
+      if value == previous_number + 1 do
+        {:cont, value}
+      else
+        {:halt, false}
+      end
+    end)
+    |> case do
+      false -> false
+      _ -> true
+    end
+  end
+
+  defp all_sequential?(_), do: false
+
+  @spec get_only_sequencial_numbers(list(integer())) :: list(integer())
+  defp get_only_sequencial_numbers([start_number | rem_years]) do
+    Enum.reduce_while(rem_years, [start_number], fn year, [previous_year | _] = acc ->
+      if year == previous_year + 1 do
+        {:cont, [year] ++ acc}
+      else
+        {:halt, acc}
+      end
+    end)
+    |> Enum.reverse()
   end
 end
