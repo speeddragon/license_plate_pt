@@ -31,5 +31,9 @@ defmodule LicensePlatePT.Information.Type1Test do
     test "Non-sequential, after special 1000, middle onwards" do
       assert @subject.get_year("LF-55-00") == 71
     end
+
+    test "No information available" do
+      refute @subject.get_year("MA-12-23")
+    end
   end
 end

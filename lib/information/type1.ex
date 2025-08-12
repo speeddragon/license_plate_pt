@@ -432,8 +432,11 @@ defmodule LicensePlatePT.Information.Type1 do
           [year] ->
             year
 
-          years ->
+          years when is_list(years) ->
             handle_multiple_years(years, numbers)
+
+          nil ->
+            nil
         end
 
       _ ->
@@ -469,8 +472,13 @@ defmodule LicensePlatePT.Information.Type1 do
 
   @spec get_years_by_letters(<<_::16, _::_*8>>) :: list(integer()) | nil
   def get_years_by_letters(<<_::binary-size(2)>> = letters) do
-    Map.get(@years, letters)
-    |> Enum.map(fn year -> String.to_integer(year) end)
+    case Map.get(@years, letters) do
+      nil ->
+        nil
+
+      years ->
+        Enum.map(years, fn year -> String.to_integer(year) end)
+    end
   end
 
   def get_region_by_letters(letters) when letters in ["AA", "AB", "AC", "AD", "EM", "EV"] do
