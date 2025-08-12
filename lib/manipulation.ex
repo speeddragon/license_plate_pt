@@ -970,4 +970,18 @@ defmodule LicensePlatePT.Manipulation do
   def split(<<p1::binary-size(2)>> <> <<p2::binary-size(2)>> <> <<p3::binary-size(2)>>) do
     [p1, p2, p3]
   end
+
+  @spec normalize(String.t()) :: <<_::46, _::_*8>> | nil
+  def normalize(license_plate) do
+    license_plate =
+      license_plate
+      |> String.replace(" ", "")
+      |> String.replace("-", "")
+      |> String.replace(".", "")
+      |> String.trim()
+
+    if valid?(license_plate) do
+      license_plate
+    end
+  end
 end
