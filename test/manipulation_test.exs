@@ -484,4 +484,30 @@ defmodule LicensePlatePT.ManipulationTest do
       end
     end
   end
+
+  describe "normalize/1" do
+    test "Dashed license plate" do
+      assert @subject.normalize("AA-01-01") == "AA0101"
+    end
+
+    test "Clean license plate" do
+      assert @subject.normalize("AA0101") == "AA0101"
+    end
+
+    test "Spaced license plate" do
+      assert @subject.normalize("AA 01 01") == "AA0101"
+    end
+
+    test "Dot license plate" do
+      assert @subject.normalize("AA.01.01") == "AA0101"
+    end
+
+    test "Spaced before, middle and after license plate" do
+      assert @subject.normalize(" AA 01 01 ") == "AA0101"
+    end
+
+    test "Invalid license plate" do
+      refute @subject.normalize("AA.01.01x")
+    end
+  end
 end

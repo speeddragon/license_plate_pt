@@ -185,14 +185,22 @@ defmodule LicensePlatePT.ValidationTest do
   end
 
   describe "before_then!" do
-    test "valid" do
-      assert @subject.before_then!("AA-00-01", "AA-00-02")
+    test "Same license plate" do
+      refute @subject.before_then!("AA-00-01", "AA-00-01")
+    end
+
+    test "First license plate higher than second" do
+      refute @subject.before_then!("00-02-CC", "00-01-CB")
+      # Different types
       assert @subject.before_then!("AA-00-02", "00-AA-01")
-      assert !@subject.before_then!("00-02-CC", "00-01-CB")
+    end
+
+    test "First license plate lower than second" do
+      assert @subject.before_then!("AA-00-01", "AA-00-02")
     end
 
     test "invalid" do
-      assert !@subject.before_then!(nil, "AA-00-02")
+      refute @subject.before_then!(nil, "AA-00-02")
 
       assert_raise(ArgumentError, fn ->
         @subject.before_then!("AA-000-01", "AA-00-02")
@@ -201,14 +209,22 @@ defmodule LicensePlatePT.ValidationTest do
   end
 
   describe "after_then!" do
-    test "valid" do
+    test "Same license plate" do
+      refute @subject.after_then!("AA-00-01", "AA-00-01")
+    end
+
+    test "First license plate higher than second" do
       assert @subject.after_then!("AA-00-02", "AA-00-01")
+      # Different types
       assert @subject.after_then!("00-AA-01", "AA-00-02")
-      assert !@subject.after_then!("00-AA-01", "00-AA-02")
+    end
+
+    test "First license plate lower than second" do
+      refute @subject.after_then!("00-AA-01", "00-AA-02")
     end
 
     test "invalid" do
-      assert !@subject.before_then!(nil, "AA-00-02")
+      refute @subject.before_then!(nil, "AA-00-02")
 
       assert_raise(ArgumentError, fn ->
         @subject.before_then!("AA-000-01", "AA-00-02")
