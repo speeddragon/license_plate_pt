@@ -3,9 +3,9 @@ defmodule LicensePlatePT.Information do
   Get information about a license plate.
   """
 
-  alias LicensePlatePT.Validation
+  alias LicensePlatePT.{LicensePlate, Validation}
 
-  import LicensePlatePT, only: [to_struct!: 1]
+  import LicensePlatePT, only: [to_struct: 1, to_struct!: 1]
 
   require Logger
 
@@ -319,5 +319,21 @@ defmodule LicensePlatePT.Information do
       _, acc ->
         {:cont, acc}
     end)
+  end
+
+  @doc """
+  Returns if a license plate is valid to calculate date information.
+
+  MA, MD, AR and HO are letters that belong to Madeira/Azores islands.
+  """
+  @spec contains_date_information?(String.t()) :: boolean()
+  def contains_date_information?(license_plate) do
+    case to_struct(license_plate) do
+      {:ok, %LicensePlate{letters: letters}} ->
+        letters not in ["MA", "MD", "AR", "HO"]
+
+      {:error, _} ->
+        false
+    end
   end
 end

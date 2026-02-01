@@ -137,6 +137,29 @@ defmodule LicensePlatePT.InformationTest do
     end
   end
 
+  describe "contains_date_information?" do
+    test "Azores license plate" do
+      refute @subject.contains_date_information?("AR-34-33")
+      refute @subject.contains_date_information?("HO-34-33")
+      refute @subject.contains_date_information?("22-34-AR")
+      refute @subject.contains_date_information?("22-34-HO")
+    end
+
+    test "Madeira license plate" do
+      refute @subject.contains_date_information?("MA-34-33")
+      refute @subject.contains_date_information?("MD-34-33")
+      refute @subject.contains_date_information?("22-34-MA")
+      refute @subject.contains_date_information?("22-34-MD")
+    end
+
+    test "Valid case" do
+      assert @subject.contains_date_information?("AB-34-33")
+      assert @subject.contains_date_information?("22-34-MB")
+      assert @subject.contains_date_information?("22-MB-44")
+      assert @subject.contains_date_information?("MB-44-JC")
+    end
+  end
+
   # Format generator, this can generate invalid license plates
   defp license_plate_generator() do
     gen all(
