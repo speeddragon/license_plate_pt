@@ -35,6 +35,8 @@ defmodule LicensePlatePT.Manipulation do
     iex> LicensePlatePT.Manipulation.add_dash("dsds")
     nil
   """
+  def add_dash(%LicensePlate{} = lp), do: to_string(%{lp | dashes: true})
+
   def add_dash(license_plate) do
     if valid?(license_plate) or valid_partial?(license_plate) do
       case String.split(license_plate, "", trim: true) do
@@ -61,6 +63,8 @@ defmodule LicensePlatePT.Manipulation do
     iex > LicensePlatePT.Manipulation.remove_dash("ds")
     nil 
   """
+  def remove_dash(%LicensePlate{} = lp), do: to_string(%{lp | dashes: false})
+
   def remove_dash(license_plate) do
     if valid?(license_plate) or valid_partial?(license_plate) do
       license_plate
@@ -77,7 +81,7 @@ defmodule LicensePlatePT.Manipulation do
 
   It supports both shorter (without dash, ex: 0054AA) or longer (width dash, ex: 00-54-AA) license plate patterns.
   """
-  @spec next(nil | binary(), integer()) :: binary() | nil
+  @spec next(nil | binary() | LicensePlate.t(), integer()) :: binary() | LicensePlate.t() | nil
   def next(license_plate, iterations \\ 1)
 
   def next(nil, _), do: nil
@@ -164,7 +168,8 @@ defmodule LicensePlatePT.Manipulation do
     iex> LicensePlatePT.previous("AA-01-01", -2)
     "AA-01-03"
   """
-  @spec previous(binary(), integer()) :: binary() | nil
+  @spec previous(nil | binary() | LicensePlate.t(), integer()) ::
+          binary() | LicensePlate.t() | nil
   def previous(license_plate, iterations \\ 1)
 
   def previous(nil, _), do: nil
@@ -501,8 +506,17 @@ defmodule LicensePlatePT.Manipulation do
   different types provided will default for the begin of the newer 
   type.
   """
-  @spec get_middle_between(binary(), binary()) :: binary()
+  @spec get_middle_between(binary() | LicensePlate.t(), binary() | LicensePlate.t()) ::
+          binary() | LicensePlate.t()
   def get_middle_between(license_plate1, license_plate2) do
+    format = detect_format(license_plate1)
+
+    license_plate1
+    |> do_get_middle_between(license_plate2)
+    |> then(&return({format, to_struct!(&1)}))
+  end
+
+  defp do_get_middle_between(license_plate1, license_plate2) do
     {license_plate1, license_plate2} =
       if Validation.before_then!(license_plate1, license_plate2) do
         {license_plate1, license_plate2}
@@ -946,8 +960,11 @@ defmodule LicensePlatePT.Manipulation do
 
   NOTE: To be development to support more than 3.
   """
-  @spec to_partial(binary()) :: binary()
+  @spec to_partial(binary() | LicensePlate.t()) :: binary()
   def to_partial(license_plate, positions \\ 3)
+
+  def to_partial(%LicensePlate{} = lp, positions),
+    do: to_partial(to_string(%{lp | dashes: true}), positions)
 
   def to_partial(_, 6), do: "__-__-__"
 
@@ -1071,7 +1088,9 @@ defmodule LicensePlatePT.Manipulation do
 
   Supports with or without dash.
   """
-  @spec split(<<_::6, _::_*8>> | <<_::8, _::_*8>>) :: list()
+  @spec split(<<_::6, _::_*8>> | <<_::8, _::_*8>> | LicensePlate.t()) :: list()
+  def split(%LicensePlate{} = lp), do: split(to_string(%{lp | dashes: true}))
+
   def split(
         <<p1::binary-size(2)>> <> "-" <> <<p2::binary-size(2)>> <> "-" <> <<p3::binary-size(2)>>
       ) do
