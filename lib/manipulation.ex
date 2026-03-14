@@ -99,7 +99,7 @@ defmodule LicensePlatePT.Manipulation do
     license_plate
     |> input_to_struct()
     |> next_struct(iterations)
-    |> then(&return({format, &1}))
+    |> return_as(format)
   end
 
   defp next_struct({:error, _}, _), do: nil
@@ -126,8 +126,12 @@ defmodule LicensePlatePT.Manipulation do
     if String.contains?(lp, "-"), do: :dashed, else: :nodash
   end
 
-  @spec return({input_format(), LicensePlate.t() | nil}) :: binary() | LicensePlate.t() | nil
-  defp return({_, nil}), do: nil
+  @spec return_as(binary() | LicensePlate.t() | nil, input_format()) ::
+          binary() | LicensePlate.t() | nil
+  defp return_as(nil, _format), do: nil
+  defp return_as(value, format), do: return({format, to_struct!(value)})
+
+  @spec return({input_format(), LicensePlate.t()}) :: binary() | LicensePlate.t()
   defp return({:dashed, %LicensePlate{} = lp}), do: to_string(%{lp | dashes: true})
   defp return({:nodash, %LicensePlate{} = lp}), do: to_string(%{lp | dashes: false})
   defp return({:struct, %LicensePlate{} = lp}), do: lp
@@ -189,7 +193,7 @@ defmodule LicensePlatePT.Manipulation do
     license_plate
     |> input_to_struct()
     |> previous_struct(iterations)
-    |> then(&return({format, &1}))
+    |> return_as(format)
   end
 
   defp previous_struct({:error, _}, _), do: nil
@@ -513,7 +517,7 @@ defmodule LicensePlatePT.Manipulation do
 
     license_plate1
     |> do_get_middle_between(license_plate2)
-    |> then(&return({format, to_struct!(&1)}))
+    |> return_as(format)
   end
 
   defp do_get_middle_between(license_plate1, license_plate2) do
