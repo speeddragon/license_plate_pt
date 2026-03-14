@@ -959,8 +959,96 @@ defmodule LicensePlatePT.Manipulation do
     end
   end
 
-  def to_partial(_, position) when position in [1, 2, 4, 5] do
-    nil
+  def to_partial(license_plate, 1) do
+    if Validation.valid?(license_plate) do
+      case Information.get_type(license_plate) do
+        [1] ->
+          "#{String.slice(license_plate, 0..1)}-#{String.slice(license_plate, 3..4)}-#{String.slice(license_plate, 6..6)}_"
+
+        [2] ->
+          "#{String.slice(license_plate, 0..1)}-#{String.slice(license_plate, 3..3)}_-#{String.slice(license_plate, 6..7)}"
+
+        [3] ->
+          "#{String.slice(license_plate, 0..1)}-#{String.slice(license_plate, 3..4)}-#{String.slice(license_plate, 6..6)}_"
+
+        [4] ->
+          "#{String.slice(license_plate, 0..1)}-#{String.slice(license_plate, 3..3)}_-#{String.slice(license_plate, 6..7)}"
+
+        _ ->
+          nil
+      end
+    else
+      nil
+    end
+  end
+
+  def to_partial(license_plate, 2) do
+    if Validation.valid?(license_plate) do
+      case Information.get_type(license_plate) do
+        [1] ->
+          "#{String.slice(license_plate, 0..1)}-#{String.slice(license_plate, 3..4)}-__"
+
+        [2] ->
+          "#{String.slice(license_plate, 0..1)}-__-#{String.slice(license_plate, 6..7)}"
+
+        [3] ->
+          "#{String.slice(license_plate, 0..1)}-#{String.slice(license_plate, 3..4)}-__"
+
+        [4] ->
+          "#{String.slice(license_plate, 0..1)}-__-#{String.slice(license_plate, 6..7)}"
+
+        _ ->
+          nil
+      end
+    else
+      nil
+    end
+  end
+
+  def to_partial(license_plate, 4) do
+    if Validation.valid?(license_plate) do
+      case Information.get_type(license_plate) do
+        [1] ->
+          "#{String.slice(license_plate, 0..1)}-__-__"
+
+        [2] ->
+          "__-__-#{String.slice(license_plate, 6..7)}"
+
+        [3] ->
+          "__-#{String.slice(license_plate, 3..4)}-__"
+
+        [4] ->
+          "#{String.slice(license_plate, 0..1)}-__-__"
+
+        _ ->
+          nil
+      end
+    else
+      nil
+    end
+  end
+
+  def to_partial(license_plate, 5) do
+    if Validation.valid?(license_plate) do
+      case Information.get_type(license_plate) do
+        [1] ->
+          "#{String.slice(license_plate, 0..0)}_-__-__"
+
+        [2] ->
+          "__-__-#{String.slice(license_plate, 6..6)}_"
+
+        [3] ->
+          "__-#{String.slice(license_plate, 3..3)}_-__"
+
+        [4] ->
+          "#{String.slice(license_plate, 0..0)}_-__-__"
+
+        _ ->
+          nil
+      end
+    else
+      nil
+    end
   end
 
   @doc """

@@ -475,6 +475,70 @@ defmodule LicensePlatePT.ManipulationTest do
     test "Replace the 3 most significant, type 4" do
       assert @subject.to_partial("AB-99-CV", 3) == "AB-__-C_"
     end
+
+    test "Replace 5, type 1" do
+      assert @subject.to_partial("AB-33-22", 5) == "A_-__-__"
+    end
+
+    test "Replace 5, type 2" do
+      assert @subject.to_partial("93-22-AB", 5) == "__-__-A_"
+    end
+
+    test "Replace 5, type 3" do
+      assert @subject.to_partial("93-AB-22", 5) == "__-A_-__"
+    end
+
+    test "Replace 5, type 4" do
+      assert @subject.to_partial("AB-99-CV", 5) == "A_-__-__"
+    end
+
+    test "Replace 4, type 1" do
+      assert @subject.to_partial("AB-33-22", 4) == "AB-__-__"
+    end
+
+    test "Replace 4, type 2" do
+      assert @subject.to_partial("93-22-AB", 4) == "__-__-AB"
+    end
+
+    test "Replace 4, type 3" do
+      assert @subject.to_partial("93-AB-22", 4) == "__-AB-__"
+    end
+
+    test "Replace 4, type 4" do
+      assert @subject.to_partial("AB-99-CV", 4) == "AB-__-__"
+    end
+
+    test "Replace 2, type 1" do
+      assert @subject.to_partial("AB-33-22", 2) == "AB-33-__"
+    end
+
+    test "Replace 2, type 2" do
+      assert @subject.to_partial("93-22-AB", 2) == "93-__-AB"
+    end
+
+    test "Replace 2, type 3" do
+      assert @subject.to_partial("93-AB-22", 2) == "93-AB-__"
+    end
+
+    test "Replace 2, type 4" do
+      assert @subject.to_partial("AB-99-CV", 2) == "AB-__-CV"
+    end
+
+    test "Replace 1, type 1" do
+      assert @subject.to_partial("AB-33-22", 1) == "AB-33-2_"
+    end
+
+    test "Replace 1, type 2" do
+      assert @subject.to_partial("93-22-AB", 1) == "93-2_-AB"
+    end
+
+    test "Replace 1, type 3" do
+      assert @subject.to_partial("93-AB-22", 1) == "93-AB-2_"
+    end
+
+    test "Replace 1, type 4" do
+      assert @subject.to_partial("AB-99-CV", 1) == "AB-9_-CV"
+    end
   end
 
   describe "split/1" do
