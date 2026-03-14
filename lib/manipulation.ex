@@ -19,6 +19,7 @@ defmodule LicensePlatePT.Manipulation do
   @type4_max_number LicensePlatePT.get_type4_max_number()
 
   @type license_plate_triplet() :: {nil | 1..4, String.t(), 0..9999}
+  @type input_format() :: :dashed | :nodash | :struct
 
   @doc """
   Add dash to a license plate. If an invalid license plate is provided, `nil` is returned.
@@ -88,20 +89,20 @@ defmodule LicensePlatePT.Manipulation do
 
   def next(%{license_plate: license_plate}, iterations), do: next(license_plate, iterations)
 
-  def next(license_plate, 0), do: license_plate
-
   def next(license_plate, iterations) do
+    format = detect_format(license_plate)
+
     license_plate
-    |> to_struct()
-    |> process_next_license_plate()
-    |> next(iterations - 1)
+    |> input_to_struct()
+    |> next_struct(iterations)
+    |> then(&return({format, &1}))
   end
 
-  defp process_next_license_plate({:error, _}) do
-    nil
-  end
+  defp next_struct({:error, _}, _), do: nil
+  defp next_struct(nil, _), do: nil
+  defp next_struct({:ok, lp}, 0), do: lp
 
-  defp process_next_license_plate({:ok, %LicensePlate{} = license_plate}) do
+  defp next_struct({:ok, %LicensePlate{} = license_plate}, iterations) do
     license_plate
     |> safe_increase_numbers()
     |> case do
@@ -109,10 +110,28 @@ defmodule LicensePlatePT.Manipulation do
         nil
 
       {type, letters, numbers} ->
-        dashes = String.contains?(to_string(license_plate), "-")
-        to_string(%LicensePlate{type: type, letters: letters, numbers: numbers, dashes: dashes})
+        {:ok, %LicensePlate{type: type, letters: letters, numbers: numbers}}
     end
+    |> next_struct(iterations - 1)
   end
+
+  @spec detect_format(binary() | LicensePlate.t()) :: input_format()
+  defp detect_format(%LicensePlate{}), do: :struct
+
+  defp detect_format(lp) when is_binary(lp) do
+    if String.contains?(lp, "-"), do: :dashed, else: :nodash
+  end
+
+  @spec return({input_format(), LicensePlate.t() | nil}) :: binary() | LicensePlate.t() | nil
+  defp return({_, nil}), do: nil
+  defp return({:dashed, %LicensePlate{} = lp}), do: to_string(%{lp | dashes: true})
+  defp return({:nodash, %LicensePlate{} = lp}), do: to_string(%{lp | dashes: false})
+  defp return({:struct, %LicensePlate{} = lp}), do: lp
+
+  @spec input_to_struct(binary() | LicensePlate.t()) ::
+          {:ok, LicensePlate.t()} | {:error, binary()}
+  defp input_to_struct(%LicensePlate{} = lp), do: {:ok, lp}
+  defp input_to_struct(lp) when is_binary(lp), do: to_struct(lp)
 
   @spec safe_increase_numbers(LicensePlate.t()) :: license_plate_triplet()
   defp safe_increase_numbers(%LicensePlate{
@@ -159,34 +178,30 @@ defmodule LicensePlatePT.Manipulation do
   def previous(%{license_plate: license_plate}, iterations),
     do: previous(license_plate, iterations)
 
-  def previous(license_plate, 0), do: license_plate
+  def previous(license_plate, iterations) do
+    format = detect_format(license_plate)
 
-  def previous(license_plate, iteration) do
     license_plate
-    |> to_struct()
-    |> process_previous_license_plate()
-    |> previous(iteration - 1)
+    |> input_to_struct()
+    |> previous_struct(iterations)
+    |> then(&return({format, &1}))
   end
 
-  defp process_previous_license_plate({:error, _}), do: nil
+  defp previous_struct({:error, _}, _), do: nil
+  defp previous_struct(nil, _), do: nil
+  defp previous_struct({:ok, lp}, 0), do: lp
 
-  defp process_previous_license_plate({:ok, %LicensePlate{} = license_plate}) do
+  defp previous_struct({:ok, %LicensePlate{} = license_plate}, iterations) do
     license_plate
     |> safe_decrease_numbers()
     |> case do
       {nil, _, _} ->
         nil
 
-      {new_type, new_letters, new_numbers} ->
-        dashes = String.contains?(to_string(license_plate), "-")
-
-        to_string(%LicensePlate{
-          type: new_type,
-          letters: new_letters,
-          numbers: new_numbers,
-          dashes: dashes
-        })
+      {type, letters, numbers} ->
+        {:ok, %LicensePlate{type: type, letters: letters, numbers: numbers}}
     end
+    |> previous_struct(iterations - 1)
   end
 
   @spec safe_decrease_numbers(LicensePlate.t()) :: license_plate_triplet()
