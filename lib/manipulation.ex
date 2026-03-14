@@ -19,6 +19,7 @@ defmodule LicensePlatePT.Manipulation do
   @type4_max_number LicensePlatePT.get_type4_max_number()
 
   @type license_plate_triplet() :: {nil | 1..4, String.t(), 0..9999}
+  @type input_format() :: :dashed | :nodash | :struct
 
   @doc """
   Add dash to a license plate. If an invalid license plate is provided, `nil` is returned.
@@ -34,6 +35,8 @@ defmodule LicensePlatePT.Manipulation do
     iex> LicensePlatePT.Manipulation.add_dash("dsds")
     nil
   """
+  def add_dash(%LicensePlate{} = lp), do: to_string(%{lp | dashes: true})
+
   def add_dash(license_plate) do
     if valid?(license_plate) or valid_partial?(license_plate) do
       case String.split(license_plate, "", trim: true) do
@@ -60,6 +63,8 @@ defmodule LicensePlatePT.Manipulation do
     iex > LicensePlatePT.Manipulation.remove_dash("ds")
     nil 
   """
+  def remove_dash(%LicensePlate{} = lp), do: to_string(%{lp | dashes: false})
+
   def remove_dash(license_plate) do
     if valid?(license_plate) or valid_partial?(license_plate) do
       license_plate
@@ -76,7 +81,7 @@ defmodule LicensePlatePT.Manipulation do
 
   It supports both shorter (without dash, ex: 0054AA) or longer (width dash, ex: 00-54-AA) license plate patterns.
   """
-  @spec next(nil | binary(), integer()) :: binary() | nil
+  @spec next(nil | binary() | LicensePlate.t(), integer()) :: binary() | LicensePlate.t() | nil
   def next(license_plate, iterations \\ 1)
 
   def next(nil, _), do: nil
@@ -88,20 +93,20 @@ defmodule LicensePlatePT.Manipulation do
 
   def next(%{license_plate: license_plate}, iterations), do: next(license_plate, iterations)
 
-  def next(license_plate, 0), do: license_plate
-
   def next(license_plate, iterations) do
+    format = detect_format(license_plate)
+
     license_plate
-    |> to_struct()
-    |> process_next_license_plate()
-    |> next(iterations - 1)
+    |> input_to_struct()
+    |> next_struct(iterations)
+    |> return_as(format)
   end
 
-  defp process_next_license_plate({:error, _}) do
-    nil
-  end
+  defp next_struct({:error, _}, _), do: nil
+  defp next_struct(nil, _), do: nil
+  defp next_struct({:ok, lp}, 0), do: lp
 
-  defp process_next_license_plate({:ok, %LicensePlate{} = license_plate}) do
+  defp next_struct({:ok, %LicensePlate{} = license_plate}, iterations) do
     license_plate
     |> safe_increase_numbers()
     |> case do
@@ -109,10 +114,32 @@ defmodule LicensePlatePT.Manipulation do
         nil
 
       {type, letters, numbers} ->
-        dashes = String.contains?(to_string(license_plate), "-")
-        to_string(%LicensePlate{type: type, letters: letters, numbers: numbers, dashes: dashes})
+        {:ok, %LicensePlate{type: type, letters: letters, numbers: numbers}}
     end
+    |> next_struct(iterations - 1)
   end
+
+  @spec detect_format(binary() | LicensePlate.t()) :: input_format()
+  defp detect_format(%LicensePlate{}), do: :struct
+
+  defp detect_format(lp) when is_binary(lp) do
+    if String.contains?(lp, "-"), do: :dashed, else: :nodash
+  end
+
+  @spec return_as(binary() | LicensePlate.t() | nil, input_format()) ::
+          binary() | LicensePlate.t() | nil
+  defp return_as(nil, _format), do: nil
+  defp return_as(value, format), do: return({format, to_struct!(value)})
+
+  @spec return({input_format(), LicensePlate.t()}) :: binary() | LicensePlate.t()
+  defp return({:dashed, %LicensePlate{} = lp}), do: to_string(%{lp | dashes: true})
+  defp return({:nodash, %LicensePlate{} = lp}), do: to_string(%{lp | dashes: false})
+  defp return({:struct, %LicensePlate{} = lp}), do: lp
+
+  @spec input_to_struct(binary() | LicensePlate.t()) ::
+          {:ok, LicensePlate.t()} | {:error, binary()}
+  defp input_to_struct(%LicensePlate{} = lp), do: {:ok, lp}
+  defp input_to_struct(lp) when is_binary(lp), do: to_struct(lp)
 
   @spec safe_increase_numbers(LicensePlate.t()) :: license_plate_triplet()
   defp safe_increase_numbers(%LicensePlate{
@@ -145,7 +172,8 @@ defmodule LicensePlatePT.Manipulation do
     iex> LicensePlatePT.previous("AA-01-01", -2)
     "AA-01-03"
   """
-  @spec previous(binary(), integer()) :: binary() | nil
+  @spec previous(nil | binary() | LicensePlate.t(), integer()) ::
+          binary() | LicensePlate.t() | nil
   def previous(license_plate, iterations \\ 1)
 
   def previous(nil, _), do: nil
@@ -159,34 +187,30 @@ defmodule LicensePlatePT.Manipulation do
   def previous(%{license_plate: license_plate}, iterations),
     do: previous(license_plate, iterations)
 
-  def previous(license_plate, 0), do: license_plate
+  def previous(license_plate, iterations) do
+    format = detect_format(license_plate)
 
-  def previous(license_plate, iteration) do
     license_plate
-    |> to_struct()
-    |> process_previous_license_plate()
-    |> previous(iteration - 1)
+    |> input_to_struct()
+    |> previous_struct(iterations)
+    |> return_as(format)
   end
 
-  defp process_previous_license_plate({:error, _}), do: nil
+  defp previous_struct({:error, _}, _), do: nil
+  defp previous_struct(nil, _), do: nil
+  defp previous_struct({:ok, lp}, 0), do: lp
 
-  defp process_previous_license_plate({:ok, %LicensePlate{} = license_plate}) do
+  defp previous_struct({:ok, %LicensePlate{} = license_plate}, iterations) do
     license_plate
     |> safe_decrease_numbers()
     |> case do
       {nil, _, _} ->
         nil
 
-      {new_type, new_letters, new_numbers} ->
-        dashes = String.contains?(to_string(license_plate), "-")
-
-        to_string(%LicensePlate{
-          type: new_type,
-          letters: new_letters,
-          numbers: new_numbers,
-          dashes: dashes
-        })
+      {type, letters, numbers} ->
+        {:ok, %LicensePlate{type: type, letters: letters, numbers: numbers}}
     end
+    |> previous_struct(iterations - 1)
   end
 
   @spec safe_decrease_numbers(LicensePlate.t()) :: license_plate_triplet()
@@ -486,8 +510,17 @@ defmodule LicensePlatePT.Manipulation do
   different types provided will default for the begin of the newer 
   type.
   """
-  @spec get_middle_between(binary(), binary()) :: binary()
+  @spec get_middle_between(binary() | LicensePlate.t(), binary() | LicensePlate.t()) ::
+          binary() | LicensePlate.t()
   def get_middle_between(license_plate1, license_plate2) do
+    format = detect_format(license_plate1)
+
+    license_plate1
+    |> do_get_middle_between(license_plate2)
+    |> return_as(format)
+  end
+
+  defp do_get_middle_between(license_plate1, license_plate2) do
     {license_plate1, license_plate2} =
       if Validation.before_then!(license_plate1, license_plate2) do
         {license_plate1, license_plate2}
@@ -931,8 +964,11 @@ defmodule LicensePlatePT.Manipulation do
 
   NOTE: To be development to support more than 3.
   """
-  @spec to_partial(binary()) :: binary()
+  @spec to_partial(binary() | LicensePlate.t()) :: binary()
   def to_partial(license_plate, positions \\ 3)
+
+  def to_partial(%LicensePlate{} = lp, positions),
+    do: to_partial(to_string(%{lp | dashes: true}), positions)
 
   def to_partial(_, 6), do: "__-__-__"
 
@@ -1056,7 +1092,9 @@ defmodule LicensePlatePT.Manipulation do
 
   Supports with or without dash.
   """
-  @spec split(<<_::6, _::_*8>> | <<_::8, _::_*8>>) :: list()
+  @spec split(<<_::6, _::_*8>> | <<_::8, _::_*8>> | LicensePlate.t()) :: list()
+  def split(%LicensePlate{} = lp), do: split(to_string(%{lp | dashes: true}))
+
   def split(
         <<p1::binary-size(2)>> <> "-" <> <<p2::binary-size(2)>> <> "-" <> <<p3::binary-size(2)>>
       ) do

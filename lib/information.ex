@@ -23,7 +23,9 @@ defmodule LicensePlatePT.Information do
 
   Return a list of possible license plates types.
   """
-  @spec get_type(binary()) :: [integer()] | nil
+  @spec get_type(binary() | LicensePlate.t()) :: [integer()] | nil
+  def get_type(%LicensePlate{type: type}), do: [type]
+
   def get_type(license_plate) do
     cond do
       Validation.valid?(license_plate) ->
@@ -90,7 +92,8 @@ defmodule LicensePlatePT.Information do
 
   If license plates contain invalid letters, it will return `nil`.
   """
-  @spec distance_between(binary(), binary()) :: integer() | nil
+  @spec distance_between(binary() | LicensePlate.t(), binary() | LicensePlate.t()) ::
+          integer() | nil
   def distance_between(license_plate1, license_plate2) do
     %{type: type1, letters: letters1, numbers: numbers1} =
       LicensePlatePT.to_struct!(license_plate1)
@@ -326,7 +329,7 @@ defmodule LicensePlatePT.Information do
 
   MA, MD, AR and HO are letters that belong to Madeira/Azores islands.
   """
-  @spec contains_date_information?(String.t()) :: boolean()
+  @spec contains_date_information?(String.t() | LicensePlate.t()) :: boolean()
   def contains_date_information?(license_plate) do
     case to_struct(license_plate) do
       {:ok, %LicensePlate{letters: letters}} ->

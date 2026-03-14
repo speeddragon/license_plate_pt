@@ -74,6 +74,8 @@ defmodule LicensePlatePT do
 
   defdelegate split(license_plate), to: LicensePlatePT.Manipulation
 
+  def to_struct(%LicensePlate{} = lp), do: {:ok, lp}
+
   def to_struct(requested_license_plate) when is_binary(requested_license_plate) do
     license_plate =
       requested_license_plate
@@ -118,6 +120,8 @@ defmodule LicensePlatePT do
         {:error, requested_license_plate}
     end
   end
+
+  def to_struct!(%LicensePlate{} = lp), do: lp
 
   def to_struct!(license_plate) when is_binary(license_plate) do
     case to_struct(license_plate) do

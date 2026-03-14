@@ -148,11 +148,13 @@ defmodule LicensePlatePT.Validation do
   @doc """
   Check if a license plate is ordered before than another license plate.
   """
-  @spec before_then!(String.t(), String.t()) :: boolean() | no_return()
+  @spec before_then!(String.t() | LicensePlate.t(), String.t() | LicensePlate.t()) ::
+          boolean() | no_return()
   def before_then!(license_plate, license_plate), do: false
 
   def before_then!(license_plate1, license_plate2)
-      when is_binary(license_plate1) and is_binary(license_plate2) do
+      when (is_binary(license_plate1) or is_struct(license_plate1, LicensePlate)) and
+             (is_binary(license_plate2) or is_struct(license_plate2, LicensePlate)) do
     %LicensePlate{type: type1, letters: letters1, numbers: numbers1} = to_struct!(license_plate1)
     %LicensePlate{type: type2, letters: letters2, numbers: numbers2} = to_struct!(license_plate2)
 
@@ -174,11 +176,13 @@ defmodule LicensePlatePT.Validation do
   @doc """
   Check if a license plate is ordered after then another license plate.
   """
-  @spec after_then!(String.t(), String.t()) :: boolean() | no_return()
+  @spec after_then!(String.t() | LicensePlate.t(), String.t() | LicensePlate.t()) ::
+          boolean() | no_return()
   def after_then!(license_plate, license_plate), do: false
 
   def after_then!(license_plate1, license_plate2)
-      when is_binary(license_plate1) and is_binary(license_plate2),
+      when (is_binary(license_plate1) or is_struct(license_plate1, LicensePlate)) and
+             (is_binary(license_plate2) or is_struct(license_plate2, LicensePlate)),
       do: !before_then!(license_plate1, license_plate2)
 
   def after_then!(_, _), do: false

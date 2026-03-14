@@ -147,6 +147,11 @@ defmodule LicensePlatePT.ManipulationTest do
       assert "AA0012" == @subject.next(%{license_plate: "AA0011"})
     end
 
+    test "Support LicensePlate struct - returns struct" do
+      lp = %LicensePlatePT.LicensePlate{type: 1, letters: "AA", numbers: 11}
+      assert %LicensePlatePT.LicensePlate{type: 1, letters: "AA", numbers: 12} = @subject.next(lp)
+    end
+
     test "Support negative values" do
       assert "AA-00-12" == @subject.next("AA-00-14", -2)
     end
@@ -257,6 +262,13 @@ defmodule LicensePlatePT.ManipulationTest do
 
     test "Support map/struct" do
       assert "AA0010" == @subject.previous(%{license_plate: "AA0011"})
+    end
+
+    test "Support LicensePlate struct - returns struct" do
+      lp = %LicensePlatePT.LicensePlate{type: 1, letters: "AA", numbers: 11}
+
+      assert %LicensePlatePT.LicensePlate{type: 1, letters: "AA", numbers: 10} =
+               @subject.previous(lp)
     end
 
     test "Support negative values" do
