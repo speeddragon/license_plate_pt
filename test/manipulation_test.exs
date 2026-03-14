@@ -124,6 +124,10 @@ defmodule LicensePlatePT.ManipulationTest do
       assert @subject.next("AA-99-IH") == "AA-00-II"
     end
 
+    test "Avoid invalid letters - Type 4 - CC and CD" do
+      assert @subject.next("CB-99-ZZ") == "CE-00-AB"
+    end
+
     test "Avoid invalid letters - Type 4" do
       # ANAL
       assert @subject.next("AN-99-AJ") == "AN-00-AM"
@@ -225,6 +229,10 @@ defmodule LicensePlatePT.ManipulationTest do
 
     test "Jump over invalid letters Type 4" do
       assert @subject.previous("AN-00-AA") == "AL-99-ZZ"
+    end
+
+    test "Jump over invalid letters Type 4 - CC and CD" do
+      assert @subject.previous("CE-00-AB") == "CB-99-ZZ"
     end
 
     test "Avoid invalid letters - Type 4 - 4 Vowles (Only valid case)" do

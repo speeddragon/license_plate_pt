@@ -301,6 +301,10 @@ defmodule LicensePlatePT.Manipulation do
     next_letters("AQAA", iteration - 1)
   end
 
+  def next_letters("CBZZ", iteration) do
+    next_letters("CEAB", iteration - 1)
+  end
+
   def next_letters(letters, iteration) when byte_size(letters) == 4 do
     <<letter1_ascii::utf8, letter2_ascii::utf8, letter3_ascii::utf8, letter4_ascii::utf8>> =
       letters
@@ -379,6 +383,10 @@ defmodule LicensePlatePT.Manipulation do
 
   def previous_letters("AQAA", iteration) do
     previous_letters("AOZZ", iteration - 1)
+  end
+
+  def previous_letters("CEAB", iteration) do
+    previous_letters("CBZZ", iteration - 1)
   end
 
   def previous_letters(letters, iteration) when byte_size(letters) == 4 do

@@ -121,6 +121,8 @@ defmodule LicensePlatePT.ValidationTest do
       refute @subject.valid?("AN-69-AL")
       refute @subject.valid?("BI-88-GO")
       refute @subject.valid?("BI-88-JE")
+      refute @subject.valid?("CC-01-AA")
+      refute @subject.valid?("CD-01-AA")
     end
 
     test "Invalid Type 4 - 4 Vowels" do
