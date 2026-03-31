@@ -189,6 +189,8 @@ defmodule LicensePlatePT.ValidationTest do
   describe "before_then!" do
     test "Same license plate" do
       refute @subject.before_then!("AA-00-01", "AA-00-01")
+      refute @subject.before_then!("AA0001", "AA-00-01")
+      refute @subject.before_then!("AA-00-01", "AA0001")
     end
 
     test "First license plate higher than second" do
@@ -213,6 +215,8 @@ defmodule LicensePlatePT.ValidationTest do
   describe "after_then!" do
     test "Same license plate" do
       refute @subject.after_then!("AA-00-01", "AA-00-01")
+      refute @subject.after_then!("AA0001", "AA-00-01")
+      refute @subject.after_then!("AA-00-01", "AA0001")
     end
 
     test "First license plate higher than second" do

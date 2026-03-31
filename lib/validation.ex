@@ -150,25 +150,12 @@ defmodule LicensePlatePT.Validation do
   """
   @spec before_then!(String.t() | LicensePlate.t(), String.t() | LicensePlate.t()) ::
           boolean() | no_return()
-  def before_then!(license_plate, license_plate), do: false
-
   def before_then!(license_plate1, license_plate2)
       when (is_binary(license_plate1) or is_struct(license_plate1, LicensePlate)) and
              (is_binary(license_plate2) or is_struct(license_plate2, LicensePlate)) do
-    %LicensePlate{type: type1, letters: letters1, numbers: numbers1} = to_struct!(license_plate1)
-    %LicensePlate{type: type2, letters: letters2, numbers: numbers2} = to_struct!(license_plate2)
-
-    if type1 == type2 do
-      # Check by Letter
-      if letters1 == letters2 do
-        # Check by Number
-        numbers1 < numbers2
-      else
-        letters1 < letters2
-      end
-    else
-      type1 < type2
-    end
+    s1 = to_struct!(license_plate1)
+    s2 = to_struct!(license_plate2)
+    not same_plate?(s1, s2) and plate_before?(s1, s2)
   end
 
   def before_then!(_, _), do: false
@@ -178,12 +165,32 @@ defmodule LicensePlatePT.Validation do
   """
   @spec after_then!(String.t() | LicensePlate.t(), String.t() | LicensePlate.t()) ::
           boolean() | no_return()
-  def after_then!(license_plate, license_plate), do: false
-
   def after_then!(license_plate1, license_plate2)
       when (is_binary(license_plate1) or is_struct(license_plate1, LicensePlate)) and
-             (is_binary(license_plate2) or is_struct(license_plate2, LicensePlate)),
-      do: !before_then!(license_plate1, license_plate2)
+             (is_binary(license_plate2) or is_struct(license_plate2, LicensePlate)) do
+    s1 = to_struct!(license_plate1)
+    s2 = to_struct!(license_plate2)
+    not same_plate?(s1, s2) and not plate_before?(s1, s2)
+  end
 
   def after_then!(_, _), do: false
+
+  defp same_plate?(
+         %LicensePlate{type: t, letters: l, numbers: n},
+         %LicensePlate{type: t, letters: l, numbers: n}
+       ),
+       do: true
+
+  defp same_plate?(_, _), do: false
+
+  defp plate_before?(
+         %LicensePlate{type: type1, letters: letters1, numbers: numbers1},
+         %LicensePlate{type: type2, letters: letters2, numbers: numbers2}
+       ) do
+    cond do
+      type1 != type2 -> type1 < type2
+      letters1 != letters2 -> letters1 < letters2
+      true -> numbers1 < numbers2
+    end
+  end
 end
